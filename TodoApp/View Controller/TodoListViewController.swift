@@ -12,14 +12,17 @@ class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     
-    let defaults = UserDefaults.standard
+     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    
+    //let defaults = UserDefaults.standard
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
-            itemArray = items
-        }
+        
+//        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
+//            itemArray = items
+//        }
         
         let newItem = Item()
         newItem.title = "Item 1"
@@ -32,6 +35,8 @@ class TodoListViewController: UITableViewController {
         let newItem3 = Item()
         newItem3.title = "Item 3"
         itemArray.append(newItem3)
+        
+        loadItems()
     }
 
     // MARK: - Table view data source
@@ -62,7 +67,7 @@ class TodoListViewController: UITableViewController {
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
-        
+        saveItems()
         
 //        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
 //            tableView.cellForRow(at: indexPath)?.accessoryType = .none
@@ -70,7 +75,6 @@ class TodoListViewController: UITableViewController {
 //            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
 //        }
         
-        tableView.reloadData()
 
         tableView.deselectRow(at: indexPath, animated: true)
         
@@ -137,8 +141,10 @@ class TodoListViewController: UITableViewController {
                 item.title = text
                 self.itemArray.append(item)
                 //self.defaults.set(self.itemArray, forKey: "TodoListArray")
+                
+                self.saveItems()
             }
-                self.tableView.reloadData()
+            
         }
         
         alert.addTextField { (alertTextField) in
@@ -148,6 +154,30 @@ class TodoListViewController: UITableViewController {
         
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
+    }
+    
+    func saveItems() {
+        let encoder = PropertyListEncoder()
+        
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        } catch {
+            print("Error")
+        }
+        
+        tableView.reloadData()
+    }
+    
+    func loadItems() {
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            let decoder = PropertyListDecoder()
+            do {
+                itemArray = try decoder.decode([Item].self, from: data)
+            } catch {
+                print(error)
+            }
+        }
     }
     
 
